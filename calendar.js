@@ -42,14 +42,15 @@ function buildEvents(now=Date.now()){const ev=[];
 const onDay=(ev,d)=>ev.filter(x=>x.d1<=d&&d<=x.d2);
 /* ---------- Fischereirecht (recht.js) ---------- */
 const FR=()=>window.FischRecht;
-const findRow=t=>{const f=FR();return f&&t?f.ROWS.find(r=>r.n===t||r.n.startsWith(t)):null};
+const findRow=t=>{const f=FR();return f&&t?f.ROWS.find(r=>r.n===t||r.n.startsWith(t)||r.n.includes('('+t)):null};
 const legalFlag=p=>{const f=FR(),r=findRow(p.target);return!!(f&&r&&f.status(r,mdOf(p.date),'am Termintag')[0]==='bad')};
 function legalHtml(p){const f=FR();if(!f)return'<div class="note">Der Bereich „Fischereirecht Hamburg“ ist nicht geladen.</div>';
  const r=findRow(p.target);let h=`<b>⚖ Hinweise für den ${fd(p.date)}</b> (nicht Heute):<br>`;
- if(r){const[,,tx]=f.status(r,mdOf(p.date),'am Termintag');h+=`<b>${esc(r.n)}:</b> ${esc(tx)}<br>Größenregel: ${r.k==='g'?'– (ganzjährig geschützt, ungeprüft)':esc(f.size(r))}<br>`}
+ if(r){const[,,tx]=f.status(r,mdOf(p.date),'am Termintag');h+=`<b>${esc(r.n)}:</b> ${esc(tx)}<br>Größenregel: ${r.k==='g'?'– (ganzjährig geschützt, darf nicht getötet werden)':esc(f.size(r))}<br>`}
  else h+='Kein Zielfisch aus der Liste gewählt – keine Prüfung möglich.<br>';
- const gw=p.lake==='Hohendeicher See'?'Verbandsgewässer des Anglerverbands Hamburg: Gastkarte oder Mitgliedschaft nötig, Fangstatistik laut Verband Pflicht, Schutzzonen (Lage ungeklärt) nicht beangeln. ':'';
- h+=`<b>Gewässerspezifische Regeln${p.lake==='other'?' (anderer Ort)':''}:</b> <b>teilweise ungeklärt</b>. ${gw}Maßgeblich ist die Gewässerordnung bzw. deine Angelberechtigung – siehe Fischereirecht HH → Gewässer.<br><small class="mu">Quelle: ${esc(f.LAWS)} · <a href="${f.LAW}" target="_blank" rel="noopener">HmbFAnGDVO (PDF)</a> · Stand ${fd(f.CHECKED)}. Hinweis, keine abschließende rechtliche Beurteilung.</small>`;return h}
+ const zs=f.inR(f.ZANDER,mdOf(p.date))?'<b>Zanderschonzeit:</b> Tote Köderfische, Fischfetzen und Kunstköder sind an diesem Tag verboten (§ 8 Abs. 2 HmbFAnGDVO; Fliegenfischen ausgenommen).<br>':'';
+ const gw=p.lake==='Hohendeicher See'?'Pachtgewässer des Anglerverbands Hamburg: Gastkarte oder Mitgliedschaft nötig, Fangstatistik ist Pflicht (Angeldatum zu Beginn eintragen), rot markierte Uferabschnitte nicht beangeln, nur nicht motorisierte Boote. ':'';
+ h+=zs+`<b>Gewässerregeln${p.lake==='other'?' (anderer Ort)':''}:</b> ${gw||'<b>ungeklärt</b>. '}Details: Fischereirecht HH → Gewässer.<br><small class="mu">Quelle: ${esc(f.LAWS)} · <a href="${f.LAW}" target="_blank" rel="noopener">HmbFAnGDVO (PDF)</a> · geprüft ${fd(f.CHECKED)}. Hinweis, keine abschließende rechtliche Beurteilung.</small>`;return h}
 /* ---------- Erinnerungen ---------- */
 function remindMs(p){if(!p.remind)return null;const s=berlinMs(p.date,p.start);
  if(p.remind==='day')return berlinMs(addD(p.date,-1),'18:00');if(p.remind==='2h')return s-72e5;if(p.remind==='1h')return s-36e5;

@@ -138,6 +138,7 @@ details{border:1px solid var(--line);border-radius:14px;padding:2px 12px;margin:
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+<script src="zonen.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -173,12 +174,19 @@ const tb=(id,label,on,short)=>{const b=$(id);b.title=label;b.setAttribute('aria-
 const sorted=a=>[...a].sort((x,y)=>(y.date+y.time).localeCompare(x.date+x.time));
 
 /* ---------- Karte ---------- */
-const map=L.map('map',{zoomControl:false}).setView([53.438,10.11],14); // Startansicht Hohendeicher See (53°26′17″ N, 10°6′36″ O laut Wikipedia), wird nach Laden der Seeumrisse ersetzt
+const map=L.map('map',{zoomControl:false}).setView([53.4401,10.1076],15); // Startansicht: Mitte des OSM-Seeumrisses Hohendeicher See, wird nach Laden der Seeumrisse ersetzt
 L.control.zoom({position:'bottomleft'}).addTo(map);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,referrerPolicy:'strict-origin-when-cross-origin',attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende'}).addTo(map);
 const cluster=L.markerClusterGroup({maxClusterRadius:35,spiderfyOnMaxZoom:true}).addTo(map);
 let markers=new Map(),lakes=[],lakeLayer=L.layerGroup().addTo(map),hlId=null;
-$('#legend').innerHTML=Object.entries(RES).map(([k,v])=>`<div><span class="lgi" style="background:${v[1]}">${pinIc(k)}</span>${v[0]}</div>`).join('')+`<div><span class="lgi" style="background:#9ca3af">${pinIc('')}</span>Nicht klassifiziert</div><div style="display:block;max-width:230px;border-top:1px solid var(--line);padding-top:6px"><b>Schutzzonen:</b> Lage ungeklärt – nicht eingezeichnet. Vor Ort Bojenketten/Schilder beachten. Details: Fischereirecht HH → Gewässer.</div>`;
+/* ---------- Angelzonen (Anglerverband Hamburg, zonen.js) – als Uferlinien, damit sie nicht mit den runden Fangmarkern verwechselt werden ---------- */
+const ZC={ok:['#15803d','Angeln möglich',null],no:['#dc2626','Angeln verboten (Pachtvertrag)',null],na:['#a855f7','Angeln nicht möglich (Ufer unzugänglich)','3 7']};
+map.createPane('zones').style.zIndex=450;
+const zoneLayer=L.layerGroup().addTo(map);
+if(window.HD_ZONES){L.polygon(HD_ZONES.boat,{pane:'zones',color:'#38bdf8',weight:1.5,dashArray:'6 6',fill:false,interactive:false}).addTo(zoneLayer);
+ for(const[t,cs]of HD_ZONES.aeb)L.polyline(cs,{pane:'zones',color:ZC[t][0],weight:6,opacity:.9,dashArray:ZC[t][2],lineCap:'butt',interactive:false}).addTo(zoneLayer)}
+$('#legend').innerHTML=Object.entries(RES).map(([k,v])=>`<div><span class="lgi" style="background:${v[1]}">${pinIc(k)}</span>${v[0]}</div>`).join('')+`<div><span class="lgi" style="background:#9ca3af">${pinIc('')}</span>Nicht klassifiziert</div><div style="display:block;border-top:1px solid var(--line);padding-top:6px"><b>Ufer laut Anglerverband</b></div>`+Object.values(ZC).map(([c,l,d])=>`<div><span style="width:22px;flex:none;border-top:5px ${d?'dotted':'solid'} ${c}"></span>${l}</div>`).join('')+`<div><span style="width:22px;flex:none;border-top:2px dashed #38bdf8"></span>Bootsangelbereich</div><label class="chk" style="margin:6px 0 2px"><input type="checkbox" id="zt" checked> Zonen anzeigen</label>`;
+$('#zt').onchange=e=>e.target.checked?map.addLayer(zoneLayer):map.removeLayer(zoneLayer);
 $('#legBtn').onclick=()=>{const l=$('#legend');l.hidden=!l.hidden;$('#legBtn').classList.toggle('on',!l.hidden)};
 const icon=(r,h)=>L.divIcon({className:'',html:`<div class="pin ${h?'hl':''}" style="background:${col(r)}">${pinIc(r)}</div>`,iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-14]});
 function popup(e){const len=e.lenMeas?e.lenMeas+' cm':e.lenEst?'ca. '+e.lenEst+' cm':'';
@@ -218,7 +226,7 @@ async function loadLakes(force){
  const all=lakeLayer.getLayers();
  if(all.length){map.fitBounds(L.featureGroup(all).getBounds().pad(.1));toast('Seeumriss aus OpenStreetMap: '+[...new Set(lakes.map(l=>l.name||'(ohne Namen)'))].join(', '))}
  else toast('Seeumriss nicht geladen (offline oder bei OSM nicht gefunden) – Karte steht auf der Startansicht Hohendeicher See.');
- $('#lakeInfo').textContent=`${lakes.length} OSM-Objekt(e) gefunden (${lakes.map(l=>l.name||'ohne Namen').join(', ')||'–'}). Der Umriss wird zur Laufzeit von OpenStreetMap geladen und danach offline gespeichert. Schutzzonen werden nicht eingezeichnet, da ihre Lage nicht belastbar belegt ist.`;
+ $('#lakeInfo').textContent=`${lakes.length} OSM-Objekt(e) gefunden (${lakes.map(l=>l.name||'ohne Namen').join(', ')||'–'}). Der Umriss wird zur Laufzeit von OpenStreetMap geladen und danach offline gespeichert. Die Angelzonen am Ufer stammen aus der Interaktiven Angelkarte des Anglerverbands Hamburg (fest eingebaut, Stand 2019, abgerufen 21.10.2026).`;
 }
 function joinRings(parts){const k=p=>p[0].toFixed(7)+','+p[1].toFixed(7),rest=parts.map(r=>r.slice()),out=[];
  while(rest.length){let ring=rest.shift(),guard=0;

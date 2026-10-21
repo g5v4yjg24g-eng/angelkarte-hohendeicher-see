@@ -1,7 +1,7 @@
 // Eigene Cache-Namen (Präfix hd-): die De-Witt-App liegt auf derselben Domain und darf nicht betroffen sein
-const PRE='hd-angelkarte-',APP=PRE+'app-v1',TILES=PRE+'tiles-v1',MAXTILES=3000;
+const PRE='hd-angelkarte-',APP=PRE+'app-v2',TILES=PRE+'tiles-v1',MAXTILES=3000;
 const CDN=['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css','https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css','https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js'];
-const LOCAL=['./','index.html','recht.js','calendar.js','manifest.json','icon-192.png','icon-512.png'];
+const LOCAL=['./','index.html','recht.js','calendar.js','zonen.js','manifest.json','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil((async()=>{const c=await caches.open(APP);await Promise.allSettled([...LOCAL,...CDN].map(u=>c.add(u)));self.skipWaiting()})())});
 self.addEventListener('activate',e=>{e.waitUntil((async()=>{for(const k of await caches.keys())if(k.startsWith(PRE)&&![APP,TILES].includes(k))await caches.delete(k);await clients.claim()})())});
 async function tile(req){
