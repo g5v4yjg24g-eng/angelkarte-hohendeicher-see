@@ -49,7 +49,6 @@ small,.mu{color:var(--mu)}
 #legend div{display:flex;align-items:center;gap:9px;margin:6px 0}.lgi{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#10201a;flex:none}.lgi .ic{width:13px;height:13px;stroke-width:2.4}
 #tools{position:absolute;top:10px;right:10px;z-index:500;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
 .tb .lb{font-size:12.5px;font-weight:700}.tb .lb:empty{display:none}
-#depth{padding:0 12px}
 #dpanel{position:absolute;z-index:500;left:60px;bottom:38px;width:min(220px,calc(100% - 190px));background:var(--ov);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:6px 10px 8px;font-size:12.5px;box-shadow:var(--sh)}#dpanel[hidden]{display:none}
 #dpanel summary{padding:6px 0;font-weight:600;cursor:pointer}#dpanel details{border:0;padding:0;margin:0;background:none}
 #dop{width:100%;min-height:0;padding:0;margin:4px 0 0;border:0;background:none;accent-color:var(--ac)}
@@ -116,7 +115,7 @@ details{border:1px solid var(--line);border-radius:14px;padding:2px 12px;margin:
 <div id="tools"><button class="tb" id="flt" aria-label="Filter" title="Filter"><svg class="ic"><use href="#i-filter"/></svg><span class="lb"></span></button>
 <button class="tb" id="sess" aria-label="Ausflug starten" title="Ausflug starten"><svg class="ic i-off"><use href="#i-timer"/></svg><svg class="ic i-on"><use href="#i-stop"/></svg><span class="lb"></span></button>
 <button class="tb" id="heat" aria-label="Heatmap anzeigen" title="Heatmap"><svg class="ic"><use href="#i-flame"/></svg></button>
-<button class="tb" id="depth" aria-label="Tiefenkarte einblenden" title="Tiefenkarte einblenden" aria-pressed="false"><svg class="ic"><use href="#i-wave"/></svg><span class="lb">Tiefenkarte</span></button>
+<button class="tb" id="depth" aria-label="Tiefenkarte einblenden" title="Tiefenkarte einblenden" aria-pressed="false"><svg class="ic"><use href="#i-wave"/></svg></button>
 <button class="tb" id="loc" aria-label="Eigenen Standort anzeigen" title="Standort"><svg class="ic"><use href="#i-locate"/></svg></button></div>
 <div id="status"></div>
 <div id="dpanel" hidden><details id="dpd"><summary>Transparenz der Tiefenkarte</summary><input type="range" id="dop" min="0" max="90" step="1" aria-label="Transparenz der Tiefenkarte in Prozent"><div class="dgl"><span>deckend</span><span id="dopv"></span><span>durchsichtig</span></div><div class="dgr"></div><div class="dgl"><span>1 m</span><span>Wassertiefe</span><span>16 m</span></div></details></div>
@@ -210,7 +209,7 @@ setTransp((()=>{try{const v=localStorage.getItem(LS+'depthTransp');if(v!==null&&
 $('#dop').oninput=e=>{setTransp(+e.target.value);try{localStorage.setItem(LS+'depthTransp',e.target.value)}catch(er){}};
 try{if(localStorage.getItem(LS+'depthPanel')==='1')$('#dpd').open=true}catch(e){}
 $('#dpd').ontoggle=()=>{try{localStorage.setItem(LS+'depthPanel',$('#dpd').open?'1':'0')}catch(e){}};
-function depthUI(){tb('#depth',depthOn?'Tiefenkarte ausblenden':'Tiefenkarte einblenden',depthOn,'Tiefenkarte');$('#depth').setAttribute('aria-pressed',depthOn);$('#dpanel').hidden=!depthOn}
+function depthUI(){tb('#depth',depthOn?'Tiefenkarte ausblenden':'Tiefenkarte einblenden',depthOn);$('#depth').setAttribute('aria-pressed',depthOn);$('#dpanel').hidden=!depthOn}
 $('#depth').onclick=()=>{if(!window.HD_DEPTH)return alert('Tiefendaten nicht geladen.');
  depthOn=!depthOn;if(depthOn){depthG=depthG||depthLayer();map.addLayer(depthG)}else if(depthG)map.removeLayer(depthG); // Kartenposition und Zoom bleiben unverändert
  depthUI()};
