@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hohendeicher See – Angelkarte</title>
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#101b17">
+<link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Angelkarte HH">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
+<style>
+:root{--bg:#0d1512;--bg2:#101b17;--card:#15221d;--card2:#1b2c26;--line:#263a33;--tx:#ecf3ef;--mu:#93aaa1;--ac:#3dbb7e;--act:#06210f;--bl:#5b9bd5;--ov:#0d1512e6;--warn:#4a3b12;--sh:0 6px 24px #0008}
+:root[data-theme=light]{--bg:#eef3f0;--bg2:#f7faf8;--card:#fff;--card2:#f1f6f3;--line:#cfdcd5;--tx:#13221b;--mu:#566d63;--ac:#2a8f5f;--act:#fff;--ov:#ffffffe8;--warn:#fde9a8;--sh:0 6px 24px #0002}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--tx);height:100dvh;display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit}
+.ic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#top{flex:none;display:flex;align-items:center;gap:10px;min-height:calc(60px + env(safe-area-inset-top));padding:calc(env(safe-area-inset-top) + 8px) calc(12px + env(safe-area-inset-right)) 8px calc(12px + env(safe-area-inset-left));background:var(--bg2);border-bottom:1px solid var(--line);z-index:900}
+.ib{flex:none;width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;padding:0;cursor:pointer}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.brand .lg{flex:none;width:36px;height:36px;border-radius:12px;background:var(--ac);color:var(--act);display:grid;place-items:center}
+.brand b{display:block;font-size:17px;line-height:1.15}.brand small{display:block;color:var(--mu);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{flex:none;height:36px;padding:0 12px;border-radius:18px;border:0;background:var(--ac);color:var(--act);font-weight:700;font-size:13px}.pill[hidden]{display:none}
+#scrim{position:fixed;inset:0;background:#000b;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;z-index:1000}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:min(86vw,340px);background:var(--bg2);border-right:1px solid var(--line);box-shadow:var(--sh);z-index:1001;transform:translateX(-104%);visibility:hidden;transition:transform .22s ease,visibility .22s;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 12px) 12px calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
+body.menu #scrim{opacity:1;visibility:visible}body.menu #drawer{transform:none;visibility:visible}
+.dh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+#nav{display:flex;flex-direction:column;gap:4px;flex:1;overflow-x:hidden;overflow-y:auto}
+#nav button{display:flex;align-items:center;gap:14px;width:100%;min-height:58px;padding:10px 12px;border:0;border-radius:14px;background:transparent;text-align:left;cursor:pointer}
+#nav button *{pointer-events:none}
+#nav button b{display:block;font-size:16px;font-weight:600}#nav button small{display:block;color:var(--mu);font-size:12.5px}
+#nav button .ic{color:var(--mu)}
+#nav button.on{background:var(--card2);box-shadow:inset 3px 0 0 var(--ac)}#nav button.on .ic{color:var(--ac)}
+.df{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.df .btn{display:flex;align-items:center;gap:12px}
+section{display:none;flex:1;min-height:0;position:relative;overflow:auto;-webkit-overflow-scrolling:touch}
+section.on{display:block}
+#v-map{overflow:hidden}#v-map.on{display:flex;flex-direction:column}
+#mapwrap{position:relative;flex:1;min-height:0}
+#map{position:absolute;inset:0;background:#1b2a30}
+.scroll{padding:16px calc(16px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));max-width:900px;margin:auto;width:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:14px}.card h3{margin-top:2px}
+h3{margin:22px 0 8px;font-size:16px}.scroll>h3:first-child{margin-top:2px}
+small,.mu{color:var(--mu)}
+.fl,.tb{height:44px;min-width:44px;border-radius:14px;background:var(--ov);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);color:var(--tx);display:flex;align-items:center;justify-content:center;gap:6px;padding:0;box-shadow:var(--sh);cursor:pointer;position:relative}
+.fl.on,.tb.on{background:var(--ac);color:var(--act);border-color:var(--ac)}
+#legWrap{position:absolute;top:10px;left:10px;z-index:500;display:flex;flex-direction:column;gap:8px;align-items:flex-start;max-width:calc(100% - 20px)}
+#legend{background:var(--ov);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:13px;box-shadow:var(--sh)}#legend[hidden]{display:none}
+#legend div{display:flex;align-items:center;gap:9px;margin:6px 0}.lgi{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#10201a;flex:none}.lgi .ic{width:13px;height:13px;stroke-width:2.4}
+#tools{position:absolute;top:10px;right:10px;z-index:500;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.tb .lb{font-size:12.5px;font-weight:700}.tb .lb:empty{display:none}
+#flt .lb{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--bg2);color:var(--tx);border:1px solid var(--ac);display:grid;place-items:center;font-size:11px}
+#flt.on .lb{background:var(--tx);color:var(--bg);border-color:var(--bg)}
+#sess .i-on{display:none}#sess.on .i-on{display:block}#sess.on .i-off{display:none}#sess:not(.on) .lb{display:none}#sess.on{padding:0 12px}
+#status{position:absolute;top:10px;left:64px;right:64px;margin:0 auto;width:fit-content;max-width:calc(100% - 128px);z-index:500;background:var(--ov);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.3;color:var(--mu);box-shadow:var(--sh);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#status.show{opacity:1;visibility:visible}
+#gps{position:absolute;z-index:500;right:10px;bottom:34px;height:52px;padding:0 18px 0 14px;border-radius:26px;border:0;background:var(--ac);color:var(--act);font-weight:700;display:flex;align-items:center;gap:8px;box-shadow:var(--sh);cursor:pointer}
+#bk{position:absolute;z-index:600;left:10px;right:10px;max-width:440px;bottom:96px;background:var(--warn);border:1px solid var(--line);border-radius:16px;padding:12px;font-size:14px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--sh)}#bk[hidden]{display:none}#bk .row{margin:0}
+.leaflet-container{font:inherit}
+.leaflet-bar{border:1px solid var(--line)!important;border-radius:14px!important;overflow:hidden;box-shadow:var(--sh)!important}
+.leaflet-bar a,.leaflet-bar a:hover{background:var(--ov);color:var(--tx);width:40px;height:40px;line-height:40px;border-bottom-color:var(--line)}
+.leaflet-control-attribution{background:var(--ov)!important;color:var(--mu)!important;font-size:11px}.leaflet-control-attribution a{color:var(--ac)!important}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card);color:var(--tx);box-shadow:var(--sh)}.leaflet-popup-content-wrapper{border-radius:16px}.leaflet-popup-content{margin:12px 14px;font-size:14px;line-height:1.45}.leaflet-container a.leaflet-popup-close-button{color:var(--mu)}
+.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(61,187,126,.35)}
+.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:var(--ac);color:var(--act);font-weight:700}
+.pin{width:30px;height:30px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;color:#10201a;box-shadow:0 2px 6px #0007}.pin .ic{width:15px;height:15px;stroke-width:2.4}.pin.hl{transform:scale(1.35);border-color:#f0f}
+#quick{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));background:var(--bg2);border-top:1px solid var(--line)}
+#quick button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;height:66px;padding:0;border-radius:16px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:600;cursor:pointer}
+#quick button:active{background:var(--card2);transform:scale(.97)}
+.qi{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#10201a}.qi .ic{width:18px;height:18px;stroke-width:2.2}
+@media(max-width:360px){#quick{gap:6px}#quick button{height:58px;font-size:12px}.qi{width:26px;height:26px}.qi .ic{width:16px;height:16px}}
+@media(max-height:480px){#quick button{height:46px;flex-direction:row;gap:8px}.qi{width:24px;height:24px}#tools{flex-direction:row-reverse}#status{right:230px;max-width:calc(100% - 300px)}}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0}
+input:not([type=checkbox]):not([type=file]),select,textarea{width:100%;min-height:46px;padding:12px;margin-top:5px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:12px;font:inherit}
+input[type=file]{width:100%;margin-top:5px;color:var(--mu)}input[type=checkbox]{width:20px;height:20px;accent-color:var(--ac);vertical-align:-4px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ac);outline-offset:1px}
+.chk{color:var(--tx)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}@media(max-width:340px){.grid{grid-template-columns:1fr}}
+.btn{min-height:46px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--tx);font-weight:600;cursor:pointer}
+.btn.p{background:var(--ac);border-color:var(--ac);color:var(--act)}.btn.d{background:#8b2a2a;border-color:#8b2a2a;color:#fff}.btn:disabled{opacity:.5}
+.row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.row .btn{flex:1}
+dialog{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:20px;width:min(560px,calc(100vw - 16px));max-height:90dvh;padding:16px;box-shadow:var(--sh);overscroll-behavior:contain}
+dialog::backdrop{background:#000b}
+dialog .row:last-child{position:sticky;bottom:-16px;margin:14px -16px -16px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
+@media(max-width:600px){dialog{width:100%;max-width:100%;margin:auto 0 0;border-radius:22px 22px 0 0;max-height:92dvh}}
+details{border:1px solid var(--line);border-radius:14px;padding:2px 12px;margin:10px 0;background:var(--card2)}summary{padding:12px 0;cursor:pointer;font-weight:600}
+.it{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px;cursor:pointer;display:flex;gap:12px;align-items:center}.it .pin{flex:none;width:30px;height:30px}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}.bar span:first-child{width:130px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bar b{display:block;height:14px;background:var(--ac);border-radius:7px}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px}.kp div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center;font-size:13px;color:var(--mu)}.kp b{font-size:26px;display:block;color:var(--tx)}
+.warn{background:var(--warn);border-radius:12px;padding:10px 12px;font-size:13px;margin:10px 0}
+@media(min-width:900px){.scroll{padding-top:24px}}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol><symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol><symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></symbol><symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-7M3 20h18"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol><symbol id="i-law" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2.5"/><circle cx="9" cy="12" r="2.5"/><circle cx="17" cy="18" r="2.5"/></symbol><symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></symbol><symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></symbol><symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5"/></symbol><symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c.5 4 5 5.5 5 10.5a5 5 0 0 1-10 0c0-2.2 1-3.5 2.2-4.7.2 2 1 3 2 3 .3-3-1-5 .8-8.8z"/></symbol><symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><circle cx="12" cy="12" r="8"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol><symbol id="i-bite" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol><symbol id="i-hook" viewBox="0 0 24 24"><path d="M12 3v11a4 4 0 1 1-4-4"/><path d="M9 3h6"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5-6"/></symbol><symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol><symbol id="i-fish" viewBox="0 0 24 24"><path d="M3 12c3-5 8-6 12-3l6-3-2 6 2 6-6-3c-4 3-9 2-12-3z"/><circle cx="9" cy="11" r=".8"/></symbol></defs></svg>
+<header id="top"><button class="ib" id="menuBtn" aria-label="Menü öffnen" aria-expanded="false" aria-controls="drawer"><svg class="ic"><use href="#i-menu"/></svg></button>
+<div class="brand"><span class="lg"><svg class="ic"><use href="#i-fish"/></svg></span><div style="min-width:0"><b>Angelkarte HH</b><small id="pageName">Gewässerkarte</small></div></div>
+<button class="pill" id="hSess" hidden aria-label="Ausflug läuft – zur Karte"></button><button class="ib" id="hSet" aria-label="Einstellungen"><svg class="ic"><use href="#i-sliders"/></svg></button></header>
+<div id="scrim"></div>
+<div id="drawer" role="dialog" aria-modal="true" aria-label="Menü" aria-hidden="true"><div class="dh"><div class="brand"><span class="lg"><svg class="ic"><use href="#i-fish"/></svg></span><div><b>Angelkarte</b><small>Hohendeicher See, Hamburg</small></div></div><button class="ib" id="menuClose" aria-label="Menü schließen"><svg class="ic"><use href="#i-close"/></svg></button></div>
+<nav id="nav" aria-label="Hauptmenü">
+<button data-v="map" class="on"><svg class="ic"><use href="#i-map"/></svg><span><b>Karte</b><small>Gewässerkarte</small></span></button>
+<button data-v="list"><svg class="ic"><use href="#i-list"/></svg><span><b>Liste</b><small>Fänge &amp; Kontakte</small></span></button>
+<button data-v="stats"><svg class="ic"><use href="#i-chart"/></svg><span><b>Statistik</b><small>Auswertungen &amp; Ausflüge</small></span></button>
+<button data-v="cal"><svg class="ic"><use href="#i-cal"/></svg><span><b>Angelkalender</b><small>Termine &amp; Sessions</small></span></button>
+<button data-v="law"><svg class="ic"><use href="#i-law"/></svg><span><b>Fischereirecht HH</b><small>Landesrecht &amp; Gewässerregeln</small></span></button>
+<button data-v="data"><svg class="ic"><use href="#i-sliders"/></svg><span><b>Einstellungen</b><small>Backup &amp; Darstellung</small></span></button>
+</nav>
+<div class="df"><button class="btn" id="theme" title="Hell/Dunkel wechseln"><svg class="ic"><use href="#i-moon"/></svg><span>Hell / Dunkel</span></button><small>Karte © OpenStreetMap-Mitwirkende</small></div></div>
+
+<section id="v-map" class="on"><div id="mapwrap"><div id="map"></div>
+<div id="legWrap"><button class="fl" id="legBtn" aria-label="Legende ein-/ausblenden" title="Legende"><svg class="ic"><use href="#i-info"/></svg></button><div id="legend" hidden></div></div>
+<div id="tools"><button class="tb" id="flt" aria-label="Filter" title="Filter"><svg class="ic"><use href="#i-filter"/></svg><span class="lb"></span></button>
+<button class="tb" id="sess" aria-label="Ausflug starten" title="Ausflug starten"><svg class="ic i-off"><use href="#i-timer"/></svg><svg class="ic i-on"><use href="#i-stop"/></svg><span class="lb"></span></button>
+<button class="tb" id="heat" aria-label="Heatmap anzeigen" title="Heatmap"><svg class="ic"><use href="#i-flame"/></svg></button>
+<button class="tb" id="loc" aria-label="Eigenen Standort anzeigen" title="Standort"><svg class="ic"><use href="#i-locate"/></svg></button></div>
+<div id="status"></div>
+<button id="gps" aria-label="Eintrag an aktueller GPS-Position anlegen" title="Eintrag an GPS-Position"><svg class="ic"><use href="#i-plus"/></svg><span>Hier</span></button>
+<div id="bk" hidden><span id="bkt"></span><div class="row"><button class="btn p" id="bkNow">Jetzt sichern</button><button class="btn" id="bkLater">Später</button></div></div></div>
+<div id="quick"><button data-r="bite"><span class="qi" style="background:#facc15"><svg class="ic"><use href="#i-bite"/></svg></span>Biss</button><button data-r="lost_hooked"><span class="qi" style="background:#fb923c"><svg class="ic"><use href="#i-hook"/></svg></span>Verloren</button><button data-r="caught"><span class="qi" style="background:#22c55e"><svg class="ic"><use href="#i-check"/></svg></span>Gefangen</button><button data-r="seen"><span class="qi" style="background:#60a5fa"><svg class="ic"><use href="#i-eye"/></svg></span>Gesehen</button></div></section>
+
+<section id="v-list"><div class="scroll" id="list"></div></section>
+<section id="v-stats"><div class="scroll" id="stats"></div></section>
+<section id="v-cal"><div class="scroll" id="cal"></div></section>
+<section id="v-law"><div class="scroll" id="law"></div></section>
+<section id="v-data"><div class="scroll">
+<div class="card"><h3>Darstellung</h3><p class="mu">Wechselt zwischen dunklem und hellem Design.</p><button class="btn" id="theme2">Hell / Dunkel wechseln</button></div>
+<div class="card"><h3>Datensicherung</h3>
+<p class="mu">Alle Daten liegen nur in diesem Browser (IndexedDB „angelkarte-hohendeicher-see“) auf diesem Gerät, getrennt von anderen Angelkarte-Apps. Sichere sie regelmäßig als JSON (Fotos machen die Datei größer).</p>
+<div class="row"><button class="btn p" id="exJ">Export JSON</button><button class="btn" id="exC">Export CSV</button></div>
+<label>Import (nur JSON-Sicherungen dieser App „Hohendeicher See“; Sicherungen der De-Witt-App werden abgelehnt)<input type="file" id="imp" accept=".json,application/json"></label></div>
+<div class="card"><h3>Seeumriss</h3><p class="mu" id="lakeInfo"></p><button class="btn" id="relake">Seeumriss neu von OpenStreetMap laden</button></div>
+<div class="card"><h3>Alles löschen</h3><button class="btn d" id="wipe">Alle Einträge löschen …</button>
+<p id="cnt" class="mu"></p></div></div></section>
+
+<dialog id="fdlg"><form id="fm" method="dialog"><b id="ft"></b> <small id="fc"></small><div id="ff"></div>
+<div class="row"><button type="button" class="btn" id="fx">Abbrechen</button><button class="btn p" id="fs">Speichern</button></div></form></dialog>
+
+<dialog id="filt"><b>Filter</b><div id="fb"></div><div class="row"><button class="btn" id="fr">Zurücksetzen</button><button class="btn p" id="fok">Fertig</button></div></dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const RES={bite:['Biss / Kontakt','#facc15'],lost_hooked:['Gehakt, verloren','#fb923c'],lost_drill:['Im Drill verloren','#f97316'],caught:['Gefangen','#22c55e'],seen:['Gesehen / Beobachtung','#3b82f6']};
+const col=r=>RES[r]?RES[r][1]:'#9ca3af';
+const ICO={bite:'bite',lost_hooked:'hook',lost_drill:'hook',caught:'check',seen:'eye'};
+const pinIc=r=>`<svg class="ic"><use href="#i-${ICO[r]||'dot'}"/></svg>`;
+const SPECIES=['Flussbarsch','Hecht','Zander','Karpfen','Schleie','Aal','Wels','Rotauge','Rotfeder','Brasse','Andere Fischart','Unbekannt']; // hier erweiterbar
+const METHODS=['Spinnfischen','Jiggen','Jigspinner','Chatterbait','Gummifisch','Wobbler','Spinner','Blinker','Drop Shot','Andere Methode'];
+const LAKES=['Hohendeicher See'];
+const APP_ID='angelkarte-hohendeicher-see',DB_NAME='angelkarte-hohendeicher-see',LS='hd-'; // eigener Speicher: getrennt von der De-Witt-App (gleiche Domain!)
+const FIELDS=[
+['Grunddaten',1,[['date','Datum','date',0,{req:1}],['time','Uhrzeit','time',0,{req:1}],['lake','Gewässer','select',LAKES,{req:1}],['result','Ergebnis','select',Object.entries(RES).map(([k,v])=>[k,v[0]]),{req:1}],['species','Fischart','select',SPECIES],['guess','Fischart ist nur eine Vermutung','check']]],
+['Größe',0,[['lenEst','Geschätzte Länge (cm)','number',0,{max:250}],['lenMeas','Gemessene Länge (cm)','number',0,{max:250}],['weight','Gewicht (g, geschätzt)','number',0,{max:100000}],['sizeNote','Weitere Angaben','text']]],
+['Methode & Köder',0,[['method','Angelmethode','select',METHODS],['bait','Köder (Name/Typ)','text'],['color','Köderfarbe','text'],['baitWeight','Ködergewicht (g)','number',0,{max:200}],['retrieve','Köderführung','select',['Gleichmäßig einholen','Faulenzen','Jiggen','Stop-and-go','Andere']],['gear','Rute / Rolle / Schnur / Vorfach','text']]],
+['Wetter & Wasser',0,[['weather','Wetter','select',['sonnig','bewölkt','Regen','wechselhaft']],['temp','Temperatur (°C)','number',0,{min:-40,max:50}],['wind','Windstärke (Bft)','number',0,{max:12}],['windDir','Windrichtung','select',['N','NO','O','SO','S','SW','W','NW']],['clouds','Bewölkung','select',['0–25 %','25–50 %','50–75 %','75–100 %']],['turbidity','Wassertrübung','select',['klar','leicht trüb','trüb']],['plants','Wasserpflanzen / Algen','select',['keine','wenig','viel']],['depth','Tiefe (m, ungefähr)','number',0,{max:100}],['waterTemp','Wassertemperatur (°C)','number',0,{min:0,max:40}],['pressure','Luftdruck (hPa)','number',0,{min:850,max:1100}],['pressTrend','Luftdruck-Trend (3 h)','select',['fallend','stabil','steigend']]]],
+['Sonstiges',0,[['intensity','Intensität des Kontakts','select',['1 (zaghaft)','2','3','4','5 (heftig)']],['released','Zurückgesetzt / entnommen','select',['zurückgesetzt','entnommen']],['notes','Notizen','area']]]];
+const NUMS=new Set(FIELDS.flatMap(s=>s[2]).filter(f=>f[2]==='number').map(f=>f[0]));
+
+/* ---------- IndexedDB ---------- */
+let db,entries=[],sessions=[],plans=[],curSess=null;
+const open=()=>new Promise((ok,no)=>{const r=indexedDB.open(DB_NAME,3);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('entries'))d.createObjectStore('entries',{keyPath:'id'});if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta');if(!d.objectStoreNames.contains('sessions'))d.createObjectStore('sessions',{keyPath:'id'});if(!d.objectStoreNames.contains('plans'))d.createObjectStore('plans',{keyPath:'id'})};r.onsuccess=()=>{db=r.result;ok()};r.onerror=()=>no(r.error)});
+const dbx=(st,mode,fn)=>new Promise((ok,no)=>{const t=db.transaction(st,mode),r=fn(t.objectStore(st));t.oncomplete=()=>ok(r&&r.result);t.onerror=()=>no(t.error);t.onabort=()=>no(t.error)});
+const put=e=>dbx('entries','readwrite',s=>s.put(e));
+const del=id=>dbx('entries','readwrite',s=>s.delete(id));
+async function reload(){entries=await dbx('entries','readonly',s=>s.getAll());sessions=await dbx('sessions','readonly',s=>s.getAll());plans=await dbx('plans','readonly',s=>s.getAll());render();checkBackup();if(window.calRefresh)window.calRefresh()}
+
+/* ---------- Hilfen ---------- */
+const de=d=>d?d.split('-').reverse().join('.'):'';
+const now=()=>{const n=new Date(),p=x=>String(x).padStart(2,'0');return{date:`${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}`,time:`${p(n.getHours())}:${p(n.getMinutes())}`}};
+const toast=m=>{const s=$('#status');s.textContent=m;s.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>s.classList.remove('show'),7000)};
+const tb=(id,label,on,short)=>{const b=$(id);b.title=label;b.setAttribute('aria-label',label);b.classList.toggle('on',!!on);const l=b.querySelector('.lb');if(l)l.textContent=short==null?'':short};
+const sorted=a=>[...a].sort((x,y)=>(y.date+y.time).localeCompare(x.date+x.time));
+
+/* ---------- Karte ---------- */
+const map=L.map('map',{zoomControl:false}).setView([53.438,10.11],14); // Startansicht Hohendeicher See (53°26′17″ N, 10°6′36″ O laut Wikipedia), wird nach Laden der Seeumrisse ersetzt
+L.control.zoom({position:'bottomleft'}).addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,referrerPolicy:'strict-origin-when-cross-origin',attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-Mitwirkende'}).addTo(map);
+const cluster=L.markerClusterGroup({maxClusterRadius:35,spiderfyOnMaxZoom:true}).addTo(map);
+let markers=new Map(),lakes=[],lakeLayer=L.layerGroup().addTo(map),hlId=null;
+$('#legend').innerHTML=Object.entries(RES).map(([k,v])=>`<div><span class="lgi" style="background:${v[1]}">${pinIc(k)}</span>${v[0]}</div>`).join('')+`<div><span class="lgi" style="background:#9ca3af">${pinIc('')}</span>Nicht klassifiziert</div><div style="display:block;max-width:230px;border-top:1px solid var(--line);padding-top:6px"><b>Schutzzonen:</b> Lage ungeklärt – nicht eingezeichnet. Vor Ort Bojenketten/Schilder beachten. Details: Fischereirecht HH → Gewässer.</div>`;
+$('#legBtn').onclick=()=>{const l=$('#legend');l.hidden=!l.hidden;$('#legBtn').classList.toggle('on',!l.hidden)};
+const icon=(r,h)=>L.divIcon({className:'',html:`<div class="pin ${h?'hl':''}" style="background:${col(r)}">${pinIc(r)}</div>`,iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-14]});
+function popup(e){const len=e.lenMeas?e.lenMeas+' cm':e.lenEst?'ca. '+e.lenEst+' cm':'';
+return `<b>${de(e.date)} ${esc(e.time)} Uhr</b><br>${esc(RES[e.result]?.[0]||'–')} · ${esc(e.lake||'')}<br>`+
+(e.species?`Fisch: ${esc(e.species)}${e.guess?' (Vermutung)':''}<br>`:'')+(len?`Länge: ${len}<br>`:'')+(e.bait?`Köder: ${esc(e.bait)}<br>`:'')+(e.notes?`<i>${esc(e.notes.slice(0,120))}</i><br>`:'')+(e.photo?`<img src="${e.photo}" style="max-width:200px;border-radius:6px;display:block;margin:4px 0">`:'')+
+`<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"><button class="btn" onclick="editE('${e.id}')">Bearbeiten</button><button class="btn" onclick="moveE('${e.id}')">Verschieben</button><button class="btn d" onclick="delE('${e.id}')">Löschen</button></div>`}
+map.on('click',ev=>openForm({lat:ev.latlng.lat,lng:ev.latlng.lng}));
+$('#gps').onclick=()=>{if(!navigator.geolocation)return alert('Kein GPS verfügbar.');toast('Suche Position …');navigator.geolocation.getCurrentPosition(p=>{map.setView([p.coords.latitude,p.coords.longitude],18);toast(`GPS-Genauigkeit ca. ${Math.round(p.coords.accuracy)} m`);openForm({lat:p.coords.latitude,lng:p.coords.longitude})},er=>alert('Position nicht verfügbar: '+er.message+' (GPS braucht HTTPS bzw. localhost)'),{enableHighAccuracy:true,timeout:20000})};
+
+/* ---------- Seeumrisse (OpenStreetMap/Overpass, zur Laufzeit; keine fest einprogrammierten Koordinaten) ---------- */
+const inPoly=(la,ln,r)=>{let c=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const[a,b]=r[i],[x,y]=r[j];if((b>ln)!==(y>ln)&&la<(x-a)*(ln-b)/(y-b)+a)c=!c}return c};
+const lakeKey=n=>/hohendeich|oortkaten/i.test(n)?LAKES[0]:'';
+function detectLake(la,ln){for(const l of lakes)if(l.key&&l.rings.some(r=>inPoly(la,ln,r)))return l.key;return''}
+async function fetchLakes(){
+ const q='[out:json][timeout:25];(way(53.40,10.03,53.48,10.19)["natural"="water"]["name"~"Hohendeich|Oortkaten",i];relation(53.40,10.03,53.48,10.19)["natural"="water"]["name"~"Hohendeich|Oortkaten",i];);out geom;';
+ for(const u of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){
+  try{const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(q)});if(!r.ok)continue;const j=await r.json();if(Array.isArray(j.elements)&&j.elements.length)return j.elements}catch(e){}}
+ try{ // Fallback: Nominatim liefert Polygone direkt
+  const out=[];
+  for(const term of['Hohendeicher See Hamburg','Oortkatensee Hamburg']){
+   const r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(term)+'&format=jsonv2&polygon_geojson=1&limit=10&accept-language=de');
+   for(const p of await r.json()){if(!p.geojson||!/Polygon/.test(p.geojson.type)||!/hohendeich|oortkaten/i.test(p.display_name))continue;
+    const polys=p.geojson.type==='Polygon'?[p.geojson.coordinates]:p.geojson.coordinates;
+    polys.forEach(pl=>out.push({type:'way',tags:{name:p.name||p.display_name.split(',')[0]},geometry:pl[0].map(c=>({lat:c[1],lon:c[0]}))}))}
+   if(out.length)break}
+  return out}catch(e){return[]}}
+async function loadLakes(force){
+ let els=force?null:await dbx('meta','readonly',s=>s.get('lakes'));
+ if(!Array.isArray(els)||!els.length){els=await fetchLakes();if(els.length)await dbx('meta','readwrite',s=>s.put(els,'lakes'))}
+ lakeLayer.clearLayers();lakes=[];
+ for(const el of els){const name=el.tags?.name||'',key=lakeKey(name);let rings=[];
+  if(el.type==='way'&&el.geometry)rings=[el.geometry.map(p=>[p.lat,p.lon])];
+  else if(el.members)for(const m of el.members)if(m.geometry&&m.role==='outer')rings.push(m.geometry.map(p=>[p.lat,p.lon])); // Multipolygon: Teilstücke der Außenlinie
+  if(el.type!=='way'&&rings.length)rings=joinRings(rings); // Relationen liefern die Außenlinie oft in Teilstücken
+  lakes.push({name,key,rings});
+  rings.forEach(r=>L.polygon(r,{color:'#3b82f6',weight:2,fillOpacity:.12,interactive:false}).addTo(lakeLayer))}
+ const all=lakeLayer.getLayers();
+ if(all.length){map.fitBounds(L.featureGroup(all).getBounds().pad(.1));toast('Seeumriss aus OpenStreetMap: '+[...new Set(lakes.map(l=>l.name||'(ohne Namen)'))].join(', '))}
+ else toast('Seeumriss nicht geladen (offline oder bei OSM nicht gefunden) – Karte steht auf der Startansicht Hohendeicher See.');
+ $('#lakeInfo').textContent=`${lakes.length} OSM-Objekt(e) gefunden (${lakes.map(l=>l.name||'ohne Namen').join(', ')||'–'}). Der Umriss wird zur Laufzeit von OpenStreetMap geladen und danach offline gespeichert. Schutzzonen werden nicht eingezeichnet, da ihre Lage nicht belastbar belegt ist.`;
+}
+function joinRings(parts){const k=p=>p[0].toFixed(7)+','+p[1].toFixed(7),rest=parts.map(r=>r.slice()),out=[];
+ while(rest.length){let ring=rest.shift(),guard=0;
+  while(k(ring[0])!==k(ring[ring.length-1])&&guard++<1000){const end=k(ring[ring.length-1]);const i=rest.findIndex(r=>k(r[0])===end||k(r[r.length-1])===end);if(i<0)break;let nx=rest.splice(i,1)[0];if(k(nx[0])!==end)nx=nx.reverse();ring=ring.concat(nx.slice(1))}
+  out.push(ring)}
+ return out}
+
+/* ---------- Formular ---------- */
+function fld([n,l,t,o,x={}]){
+ if(t==='select')return`<label>${l}<select name="${n}" ${x.req?'required':''}><option value="">–</option>${o.map(v=>{const[a,b]=Array.isArray(v)?v:[v,v];return`<option value="${a}">${b}</option>`}).join('')}</select></label>`;
+ if(t==='check')return`<label class="chk"><input type="checkbox" name="${n}"> ${l}</label>`;
+ if(t==='area')return`<label>${l}<textarea name="${n}" rows="3"></textarea></label>`;
+ const num=t==='number'?`step="any" min="${x.min??0}" ${x.max!=null?`max="${x.max}"`:''} inputmode="decimal"`:'';
+ return`<label>${l}<input name="${n}" type="${t}" ${num} ${x.req?'required':''}></label>`}
+$('#ff').innerHTML=FIELDS.map(([t,open,fs])=>open?`<div class="grid">${fs.map(fld).join('')}</div>`:`<details><summary>${t}</summary><div class="grid">${fs.map(fld).join('')}</div></details>`).join('');
+const DT=[...document.querySelectorAll('#ff details')];
+DT[1].insertAdjacentHTML('afterbegin','<div class="row"><select id="favSel"></select></div><div class="row"><button type="button" class="btn" id="favSave">★ Als Favorit speichern</button><button type="button" class="btn" id="favDel">Favorit löschen</button></div>');
+DT[2].insertAdjacentHTML('afterbegin','<div class="row"><button type="button" class="btn" id="wx">☁ Wetter automatisch eintragen</button></div><small id="wxs" class="mu"></small>');
+DT[3].insertAdjacentHTML('beforeend','<label>Foto<input type="file" id="ph" accept="image/*"></label><img id="phv" style="max-width:100%;border-radius:8px;display:none"><button type="button" class="btn" id="phx" style="display:none">Foto entfernen</button>');
+/* Köder-Favoriten */
+let favs=[];const FK=['method','bait','color','baitWeight','retrieve'];
+const favLabel=f=>[f.bait||f.method,f.color,f.baitWeight?f.baitWeight+' g':''].filter(Boolean).join(' · ');
+function favUI(){$('#favSel').innerHTML='<option value="">★ Favorit wählen …</option>'+favs.map((f,i)=>`<option value="${i}">${esc(favLabel(f))}</option>`).join('')}
+const favSave=()=>dbx('meta','readwrite',s=>s.put(favs,'favs'));
+$('#favSel').onchange=e=>{const f=favs[e.target.value];if(!f)return;FK.forEach(k=>{$('#fm').elements[k].value=f[k]??''})};
+$('#favSave').onclick=async()=>{const el=$('#fm').elements,f={};FK.forEach(k=>f[k]=el[k].value);if(!f.bait&&!f.method)return alert('Bitte erst Köder oder Methode eintragen.');favs.push(f);await favSave();favUI();toast('Favorit gespeichert.')};
+$('#favDel').onclick=async()=>{const i=$('#favSel').value;if(i===''||!confirm('Diesen Favoriten löschen?'))return;favs.splice(+i,1);await favSave();favUI()};
+/* Wetter (Open-Meteo, ohne Schlüssel) */
+const DIRS=['N','NO','O','SO','S','SW','W','NW'];
+async function weatherFor(lat,lng,date,time){
+ const age=(Date.now()-new Date(date))/864e5,base=age>80?'https://archive-api.open-meteo.com/v1/archive':'https://api.open-meteo.com/v1/forecast';
+ const j=await(await fetch(`${base}?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&start_date=${date}&end_date=${date}&hourly=temperature_2m,cloud_cover,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code&wind_speed_unit=ms&timezone=Europe%2FBerlin`)).json(),h=j.hourly;
+ if(!h)throw Error(j.reason||'keine Daten');
+ const i=Math.min(23,Math.max(0,+time.slice(0,2)+(+time.slice(3,5)>=30?1:0))),g=k=>h[k][i],c=g('weather_code'),d=g('surface_pressure')-h.surface_pressure[Math.max(0,i-3)];
+ return{temp:Math.round(g('temperature_2m')*10)/10,wind:Math.min(12,Math.round(Math.pow(g('wind_speed_10m')/.836,2/3))),windDir:DIRS[Math.round(g('wind_direction_10m')/45)%8],clouds:['0–25 %','25–50 %','50–75 %','75–100 %'][Math.min(3,Math.floor(g('cloud_cover')/25))],weather:c<=1?'sonnig':c<=48?'bewölkt':(c>=51&&c<=67)||c>=80?'Regen':'wechselhaft',pressure:Math.round(g('surface_pressure')),pressTrend:d<-1?'fallend':d>1?'steigend':'stabil'}}
+$('#wx').onclick=async()=>{const el=$('#fm').elements;if(!el.date.value||!el.time.value)return;$('#wxs').textContent='Lade …';
+ try{const w=await weatherFor(cur.lat,cur.lng,el.date.value,el.time.value);for(const k in w)if(el[k]&&el[k].value==='')el[k].value=w[k];$('#wxs').textContent='Leere Felder gefüllt (Open-Meteo: Modellwerte für den Ort, keine Messung am See).'}catch(e){$('#wxs').textContent='Fehlgeschlagen: '+e.message}};
+/* Foto */
+let curPhoto='';
+const phShow=()=>{$('#phv').src=curPhoto;$('#phv').style.display=curPhoto?'block':'none';$('#phx').style.display=curPhoto?'block':'none'};
+$('#ph').onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>{const k=Math.min(1,1024/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);curPhoto=c.toDataURL('image/jpeg',.7);phShow();URL.revokeObjectURL(im.src)};im.src=URL.createObjectURL(f);e.target.value=''};
+$('#phx').onclick=()=>{curPhoto='';phShow()};
+let cur=null;
+function openForm(e){
+ const isNew=!e.id;cur=isNew?{id:crypto.randomUUID(),lat:e.lat,lng:e.lng,created:Date.now(),...now(),lake:detectLake(e.lat,e.lng)||curSess?.lake||'',sessionId:curSess?.id,...(curSess?.pre||{})}:{...e};curPhoto=cur.photo||'';phShow();$('#wxs').textContent='';
+ const f=$('#fm');for(const el of f.elements){if(!el.name)continue;const v=cur[el.name];if(el.type==='checkbox')el.checked=!!v;else el.value=v??''}
+ $('#ft').textContent=isNew?'Neuer Fischkontakt':'Eintrag bearbeiten';
+ $('#fc').textContent=`${cur.lat.toFixed(6)}, ${cur.lng.toFixed(6)}`;
+ $('#fdlg').showModal();
+}
+$('#fx').onclick=()=>$('#fdlg').close();
+$('#fm').onsubmit=async ev=>{
+ const f=$('#fm');if(!f.checkValidity())return;
+ const d={...cur,updated:Date.now(),photo:curPhoto};
+ for(const el of f.elements){if(!el.name)continue;d[el.name]=el.type==='checkbox'?el.checked:NUMS.has(el.name)?(el.value===''?null:+el.value):el.value}
+ try{await put(d);await reload();hlId=null}catch(e){ev.preventDefault();alert('Speichern fehlgeschlagen: '+e.message)}
+};
+window.editE=id=>{map.closePopup();openForm(entries.find(e=>e.id===id))};
+window.delE=async id=>{if(!confirm('Diesen Eintrag endgültig löschen?'))return;map.closePopup();await del(id);await reload()};
+
+/* ---------- Filter ---------- */
+const F={from:'',to:'',lake:'',species:'',kind:'',method:'',bait:''};
+const sel=(k,l,o)=>`<label>${l}<select data-f="${k}"><option value="">Alle</option>${o.map(v=>{const[a,b]=Array.isArray(v)?v:[v,v];return`<option value="${a}">${b}</option>`}).join('')}</select></label>`;
+$('#fb').innerHTML=`<div class="grid"><label>Von<input type="date" data-f="from"></label><label>Bis<input type="date" data-f="to"></label></div>`+sel('lake','Gewässer',LAKES)+sel('species','Fischart',SPECIES)+sel('kind','Art',[['caught','Nur erfolgreiche Fänge'],['contact','Nur Kontakte (ohne Fang)']])+sel('method','Angelmethode',METHODS)+`<label>Ködertyp (enthält)<input data-f="bait"></label>`;
+$('#fb').oninput=e=>{if(e.target.dataset.f){F[e.target.dataset.f]=e.target.value;render()}};
+$('#flt').onclick=()=>$('#filt').showModal();$('#fok').onclick=()=>$('#filt').close();
+$('#fr').onclick=()=>{Object.keys(F).forEach(k=>F[k]='');document.querySelectorAll('[data-f]').forEach(e=>e.value='');render()};
+const filtered=()=>entries.filter(e=>(!F.from||e.date>=F.from)&&(!F.to||e.date<=F.to)&&(!F.lake||e.lake===F.lake)&&(!F.species||e.species===F.species)&&(!F.kind||(F.kind==='caught'?e.result==='caught':e.result!=='caught'))&&(!F.method||e.method===F.method)&&(!F.bait||(e.bait||'').toLowerCase().includes(F.bait.toLowerCase())));
+const active=()=>Object.values(F).some(Boolean);
+
+/* ---------- Rendering ---------- */
+function render(){
+ const fe=filtered();tb('#flt',active()?`Filter aktiv (${fe.length} von ${entries.length} Einträgen)`:'Filter',active(),active()?fe.length:'');
+ cluster.clearLayers();markers=new Map();
+ fe.forEach(e=>{const m=L.marker([e.lat,e.lng],{icon:icon(e.result,e.id===hlId)}).bindPopup(()=>popup(e));markers.set(e.id,m);cluster.addLayer(m)});
+ $('#list').innerHTML=(fe.length?'':'<p class="mu">Noch keine Einträge (oder durch Filter ausgeblendet). Tippe auf die Karte, um den ersten Fischkontakt anzulegen.</p>')+sorted(fe).map(e=>`<div class="it" data-id="${e.id}"><div class="pin" style="background:${col(e.result)}">${pinIc(e.result)}</div><div><b>${de(e.date)} ${esc(e.time)}</b> · ${esc(RES[e.result]?.[0]||'–')}<br><small>${esc(e.lake||'')} ${e.species?'· '+esc(e.species)+(e.guess?' (?)':''):''} ${e.bait?'· '+esc(e.bait):''}</small></div></div>`).join('');
+ $('#cnt').textContent=`${entries.length} Einträge gespeichert.`;
+ if(heatL)heatL.setLatLngs(fe.filter(e=>e.result!=='seen').map(e=>[e.lat,e.lng,e.result==='caught'?1:.6]));
+ if($('#v-stats').classList.contains('on'))stats(fe);
+}
+$('#list').onclick=ev=>{const it=ev.target.closest('.it');if(!it)return;const id=it.dataset.id,e=entries.find(x=>x.id===id);hlId=id;show('map');render();map.setView([e.lat,e.lng],Math.max(map.getZoom(),18));const m=markers.get(id);cluster.zoomToShowLayer(m,()=>m.openPopup())};
+
+/* ---------- Statistik ---------- */
+const tally=(a,f)=>a.reduce((o,e)=>{const k=f(e);if(k)o[k]=(o[k]||0)+1;return o},{});
+const bars=(t,o,n=12)=>{const r=Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,n),mx=Math.max(1,...r.map(x=>x[1]));return`<h3>${t}</h3>`+(r.length?r.map(([k,v])=>`<div class="bar"><span title="${esc(k)}">${esc(k)}</span><b style="width:${v/mx*55}%"></b><span>${v}</span></div>`).join(''):'<p class="mu">Keine Daten.</p>')};
+function stats(fe=filtered()){
+ const con=fe.filter(e=>e.result!=='seen'),caught=con.filter(e=>e.result==='caught'),lost=con.filter(e=>e.result==='lost_hooked'||e.result==='lost_drill'),bites=con.filter(e=>e.result==='bite');
+ const bt=(e)=>(e.bait||'').trim().toLowerCase();
+ const baitRows=Object.fromEntries(Object.entries(tally(con,e=>bt(e))).map(([k,v])=>[`${k}  (${caught.filter(e=>bt(e)===k).length} Fänge)`,v]));
+ const mRows=Object.fromEntries(Object.entries(tally(con,e=>e.method)).map(([k,v])=>[`${k}  (${caught.filter(e=>e.method===k).length} Fänge)`,v]));
+ const hb=tally(con,e=>e.time?String(Math.floor(+e.time.slice(0,2)/3)*3).padStart(2,'0')+'–'+String(Math.floor(+e.time.slice(0,2)/3)*3+3).padStart(2,'0')+' Uhr':'');
+ const mo=tally(con,e=>e.date?['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'][+e.date.slice(5,7)-1]:'');
+ const lk=Object.fromEntries(LAKES.map(l=>[`${l}  (${caught.filter(e=>e.lake===l).length} Fänge)`,con.filter(e=>e.lake===l).length]));
+ const ss=sessions.filter(x=>x.end).sort((a,b)=>b.start-a.start),hrs=ss.reduce((a,x)=>a+(x.end-x.start),0)/36e5,sc=x=>entries.filter(e=>e.sessionId===x.id&&e.result!=='seen'),scn=ss.reduce((a,x)=>a+sc(x).length,0),scc=ss.reduce((a,x)=>a+sc(x).filter(e=>e.result==='caught').length,0);
+ const sessHtml=`${bars('Luftdruck-Trend (Kontakte)',tally(con,e=>e.pressTrend))}<h3>Ausflüge</h3>`+(ss.length?`<p>${ss.length} Ausflüge, ${fmtDur(hrs*36e5)} gesamt · ${(scn/hrs).toFixed(2).replace('.',',')} Kontakte/Std. · ${(scc/hrs).toFixed(2).replace('.',',')} Fänge/Std. · ${ss.filter(x=>!sc(x).length).length} ohne Kontakt</p>${ss.length<5?'<div class="warn">Erst '+ss.length+' Ausflüge – die Raten sind noch nicht aussagekräftig.</div>':''}`+ss.slice(0,10).map(x=>`<div class="bar"><span>${new Date(x.start).toLocaleDateString('de-DE')}</span><span style="width:auto">${fmtDur(x.end-x.start)} · ${sc(x).length} Kontakte · ${sc(x).filter(e=>e.result==='caught').length} Fänge</span></div>`).join(''):'<p class="mu">Noch keine beendeten Ausflüge. Starte einen mit „Ausflug starten“ auf der Karte.</p>');
+ $('#stats').innerHTML=`<div class="kp"><div><b>${con.length}</b>Fischkontakte</div><div><b>${caught.length}</b>Gefangen</div><div><b>${lost.length}</b>Verloren</div><div><b>${bites.length}</b>Nur Biss</div><div><b>${fe.length-con.length}</b>Sichtungen</div></div>
+ <p class="mu">„Kontakte“ umfasst Bisse, verlorene und gefangene Fische (ohne Sichtungen). Fänge sind eine Teilmenge davon.${active()?' Aktive Filter wirken auch hier.':''}</p>
+ ${con.length<30?`<div class="warn">Bisher nur ${con.length} Kontakte: Unterschiede zwischen Ködern, Zeiten oder Gewässern sind bei so wenigen Daten Zufall und keine belastbaren Aussagen.</div>`:''}
+ ${bars('Fischarten (alle Einträge, auch Vermutungen)',tally(fe,e=>e.species))}${bars('Köder (Kontakte)',baitRows)}${bars('Angelmethoden (Kontakte)',mRows)}${bars('Tageszeit (Kontakte)',hb)}${bars('Monate (Kontakte)',mo)}${bars('Gewässer-Vergleich (Kontakte)',lk)}
+ ${sessHtml}<p class="mu">Räumliche Auswertung: Button „Heatmap“ auf der Karte.</p>`}
+
+/* ---------- Navigation ---------- */
+function show(v){document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));if(v==='map')setTimeout(()=>map.invalidateSize(),50);if(v==='stats')stats();const sc=$('#v-'+v);if(sc)sc.scrollTop=0;const pn=$('#pageName');if(pn)pn.textContent=PAGES[v]||''}
+$('#nav').onclick=e=>{if(e.target.dataset.v)show(e.target.dataset.v)};
+
+/* ---------- Export / Import ---------- */
+const dl=(name,txt,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)};
+const stamp=()=>now().date;
+const exportJSON=async()=>{dl(`angelkarte-hohendeicher-see-${stamp()}.json`,JSON.stringify({app:APP_ID,version:2,water:{name:LAKES[0],alias:'Oortkatensee',city:'Hamburg',lakes:LAKES},exported:new Date().toISOString(),entries,sessions,plans},null,1),'application/json');await dbx('meta','readwrite',s=>s.put(Date.now(),'lastBackup'));checkBackup()};
+$('#exJ').onclick=exportJSON;
+$('#exC').onclick=()=>{const keys=['id','date','time','lake','lat','lng','result',...FIELDS.flatMap(s=>s[2].map(f=>f[0])).filter(k=>!['date','time','lake','result'].includes(k))];
+ const q=v=>{v=v==null?'':String(v);return/[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+ dl(`angelkarte-hohendeicher-see-${stamp()}.csv`,'\ufeff'+[keys.join(';'),...sorted(entries).map(e=>keys.map(k=>q(e[k])).join(';'))].join('\n'),'text/csv')};
+$('#imp').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
+ const msg=e=>e&&e.name&&e.message?e.name+': '+e.message:String(e&&e.message||e||'unbekannter Fehler');
+ try{
+  const j=JSON.parse((await f.text()).replace(/^\uFEFF/,'')),a=Array.isArray(j)?j:j.entries;
+  if(!Array.isArray(a))throw Error('In der Datei wurden keine Einträge gefunden (Feld „entries“ fehlt). Ist es eine Angelkarte-Sicherung?');
+  // Schutz vor Fremd-Sicherungen (z. B. aus der De-Witt-App): nur eigene Sicherungen ohne Rückfrage
+  const foreign=a.filter(e=>e&&e.lake&&!LAKES.includes(e.lake)).length;
+  if(j.app==='angelkarte'||(j.app&&j.app!==APP_ID))throw Error(`Diese Datei stammt aus einer anderen App („${j.app}“, z. B. Angelkarte De Witt See) und wird nicht importiert, damit sich die Daten beider Apps nicht vermischen.`);
+  if(!j.app&&!confirm('Die Datei enthält keine Kennung dieser App (Hohendeicher See). Sie stammt evtl. aus einer anderen App.\nTrotzdem importieren?'))return;
+  if(foreign&&!confirm(`${foreign} Einträge gehören zu einem anderen Gewässer (nicht Hohendeicher See). Trotzdem importieren?`))return;
+  const ok=a.filter(e=>e&&typeof e==='object'&&e.lat!=null&&e.lat!==''&&e.lng!=null&&e.lng!=='').map(e=>({...e,id:e.id||crypto.randomUUID(),lat:Number(e.lat),lng:Number(e.lng)})).filter(e=>isFinite(e.lat)&&isFinite(e.lng));
+  if(!ok.length)throw Error('Keine gültigen Einträge mit Koordinaten gefunden ('+a.length+' Einträge in der Datei).');
+  const over=ok.filter(e=>entries.some(x=>x.id===e.id)).length;
+  if(!confirm(`${ok.length} gültige Einträge importieren (${a.length-ok.length} übersprungen)?\n${over?over+' vorhandene Einträge mit gleicher ID werden ÜBERSCHRIEBEN.':'Es wird kein vorhandener Eintrag überschrieben.'}`))return;
+  let n=0,bad=0,first='';
+  for(const e of ok){try{await put(e);n++}catch(er){bad++;first=first||msg(er)}}
+  for(const x of(Array.isArray(j.sessions)?j.sessions:[]))if(x&&x.id&&x.start&&x.end){try{await dbx('sessions','readwrite',st=>st.put(x))}catch(er){first=first||msg(er)}}
+  for(const x of(Array.isArray(j.plans)?j.plans:[])){const pl=window.AngelCal&&AngelCal.cleanPlan(x);if(!pl||plans.some(q=>q.id!==pl.id&&q.date===pl.date&&q.start===pl.start&&q.title===pl.title&&q.lake===pl.lake))continue;try{await dbx('plans','readwrite',st=>st.put(pl))}catch(er){first=first||msg(er)}}
+  await reload();
+  if(bad)alert(`${n} importiert, ${bad} fehlgeschlagen.\nErster Fehler: ${first}`);else toast(n+' Einträge importiert.');
+ }catch(e){alert('Import fehlgeschlagen: '+msg(e))}};
+$('#wipe').onclick=async()=>{if(!entries.length)return alert('Keine Einträge vorhanden.');
+ if(confirm('Zuerst alle Daten als JSON sichern?\nOK = Sicherung herunterladen, Abbrechen = ohne Sicherung weiter'))exportJSON();
+ if(!confirm(`Wirklich ALLE ${entries.length} Einträge (inkl. Ausflüge und geplanter Termine) endgültig löschen?`))return;
+ await dbx('entries','readwrite',s=>s.clear());await dbx('sessions','readwrite',s=>s.clear());await dbx('plans','readwrite',s=>s.clear());await reload()};
+$('#relake').onclick=()=>loadLakes(true);
+
+(async()=>{try{await open();favs=(await dbx('meta','readonly',s=>s.get('favs')))||[];favUI();curSess=(await dbx('meta','readonly',s=>s.get('active')))||null;sessUI();await reload();await loadLakes()}catch(e){toast('Fehler: '+e.message);alert('Speicher (IndexedDB) nicht verfügbar: '+e.message+'\nPrivater Modus?')}})();
+
+/* ---------- Schnellerfassung ---------- */
+let qBusy=false;
+function quick(result){
+ if(qBusy)return;qBusy=true;
+ const go=async(lat,lng,acc)=>{try{const e={id:crypto.randomUUID(),created:Date.now(),...now(),lat,lng,result,lake:detectLake(lat,lng)||curSess?.lake||'',sessionId:curSess?.id,...(curSess?.pre||{})};
+  await put(e);weatherFor(lat,lng,e.date,e.time).then(w=>{Object.assign(entries.find(x=>x.id===e.id)||{},w);return put({...e,...w})}).catch(()=>{});await reload();map.setView([lat,lng],Math.max(map.getZoom(),17));
+  toast(`${RES[result][0]} gespeichert${acc?` (GPS ±${Math.round(acc)} m)`:''} – Marker antippen zum Ergänzen`);
+  const m=markers.get(e.id);if(m)cluster.zoomToShowLayer(m,()=>m.openPopup())}catch(er){alert('Speichern fehlgeschlagen: '+er.message)}qBusy=false};
+ const fail=m=>{if(confirm(m+'\nEintrag stattdessen in der Kartenmitte speichern?')){const c=map.getCenter();go(c.lat,c.lng)}else qBusy=false};
+ if(!navigator.geolocation)return fail('Kein GPS verfügbar.');
+ toast('Suche GPS …');
+ navigator.geolocation.getCurrentPosition(p=>go(p.coords.latitude,p.coords.longitude,p.coords.accuracy),er=>fail('Position nicht verfügbar ('+er.message+').'),{enableHighAccuracy:true,timeout:15000,maximumAge:15000});
+}
+document.querySelectorAll('#quick button').forEach(b=>b.onclick=()=>quick(b.dataset.r));
+
+/* ---------- Sicherungs-Erinnerung ---------- */
+let bkSnooze=false;
+async function checkBackup(){
+ const lb=(await dbx('meta','readonly',s=>s.get('lastBackup')))||0;
+ const n=entries.filter(e=>(e.updated||e.created||0)>lb).length;
+ const due=n>=5||(n>=1&&lb&&Date.now()-lb>14*864e5);
+ $('#bk').hidden=!due||bkSnooze;
+ $('#bkt').textContent=lb?`${n} neue/geänderte Einträge seit der letzten Sicherung (${new Date(lb).toLocaleDateString('de-DE')}). Jetzt als JSON sichern?`:`${n} Einträge wurden noch nie gesichert. Jetzt als JSON sichern?`}
+$('#bkNow').onclick=exportJSON;
+$('#bkLater').onclick=()=>{bkSnooze=true;$('#bk').hidden=true};
+
+/* ---------- Offline / Installierbar ---------- */
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+navigator.storage?.persist?.();
+
+/* ---------- Ausflüge ---------- */
+const fmtDur=ms=>{const m=Math.round(ms/6e4);return m>=60?`${Math.floor(m/60)} h ${m%60} min`:`${m} min`};
+function sessUI(){const d=curSess?fmtDur(Date.now()-curSess.start):'';tb('#sess',curSess?`Ausflug beenden (läuft seit ${d})`:'Ausflug starten',!!curSess,d);const h=$('#hSess');if(h){h.hidden=!curSess;h.textContent=curSess?'● '+d:''}}
+$('#sess').onclick=async()=>{
+ if(!curSess){curSess={id:crypto.randomUUID(),start:Date.now()};await dbx('meta','readwrite',st=>st.put(curSess,'active'));toast('Ausflug gestartet – neue Einträge werden ihm zugeordnet.')}
+ else{if(!confirm('Ausflug beenden?'))return;const x={...curSess,end:Date.now()};await dbx('sessions','readwrite',st=>st.put(x));await dbx('meta','readwrite',st=>st.delete('active'));curSess=null;await reload();toast('Ausflug gespeichert: '+fmtDur(x.end-x.start))}
+ sessUI()};
+setInterval(sessUI,60000);
+/* ---------- Heatmap ---------- */
+let heatL=null;
+$('#heat').onclick=()=>{
+ if(heatL){map.removeLayer(heatL);heatL=null;map.addLayer(cluster);tb('#heat','Heatmap anzeigen',false);return}
+ if(!L.heatLayer)return alert('Heatmap-Bibliothek nicht geladen (offline?).');
+ const c=filtered().filter(e=>e.result!=='seen');
+ heatL=L.heatLayer(c.map(e=>[e.lat,e.lng,e.result==='caught'?1:.6]),{radius:25,blur:20,maxZoom:18}).addTo(map);map.removeLayer(cluster);tb('#heat','Heatmap ausblenden',true);
+ toast(c.length<30?`Nur ${c.length} Kontakte: Häufungen sind bei so wenigen Daten Zufall, kein Beleg für gute Stellen.`:`${c.length} Kontakte (Fänge zählen stärker). Zeigt nur deine eigenen Einträge.`)};
+/* ---------- Live-Standort ---------- */
+let watchId=null,locL=null;
+$('#loc').onclick=()=>{
+ if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;if(locL)map.removeLayer(locL);locL=null;tb('#loc','Eigenen Standort anzeigen',false);return}
+ if(!navigator.geolocation)return alert('Kein GPS verfügbar.');
+ let first=true;tb('#loc','Standort ausblenden',true);
+ watchId=navigator.geolocation.watchPosition(p=>{const ll=[p.coords.latitude,p.coords.longitude];
+  if(!locL)locL=L.layerGroup([L.circle(ll,{radius:p.coords.accuracy,color:'#3b82f6',weight:1,fillOpacity:.1,interactive:false}),L.circleMarker(ll,{radius:8,color:'#fff',weight:2,fillColor:'#3b82f6',fillOpacity:1,interactive:false})]).addTo(map);
+  else{const[c,m]=locL.getLayers();c.setLatLng(ll).setRadius(p.coords.accuracy);m.setLatLng(ll)}
+  if(first){first=false;map.setView(ll,Math.max(map.getZoom(),17))}},er=>toast('Standort: '+er.message),{enableHighAccuracy:true,maximumAge:5000})};
+/* ---------- Marker verschieben ---------- */
+window.moveE=id=>{const m=markers.get(id),e=entries.find(x=>x.id===id);if(!m||!e)return;map.closePopup();m.dragging.enable();toast('Marker mit dem Finger an die richtige Stelle ziehen und loslassen.');
+ m.once('dragend',async()=>{m.dragging.disable();const p=m.getLatLng();e.lat=p.lat;e.lng=p.lng;e.lake=detectLake(p.lat,p.lng)||e.lake;e.updated=Date.now();await put(e);await reload();toast('Position aktualisiert.')})};
+/* ---------- Hell/Dunkel ---------- */
+try{document.documentElement.dataset.theme=localStorage.getItem(LS+'theme')||''}catch(e){}
+$('#theme').onclick=()=>{const t=document.documentElement.dataset.theme==='light'?'':'light';document.documentElement.dataset.theme=t;try{localStorage.setItem(LS+'theme',t)}catch(e){}};
+
+/* ---------- Kopfzeile & Seitenmenü ---------- */
+const PAGES={map:'Gewässerkarte',list:'Fänge & Kontakte',stats:'Statistik',cal:'Angelkalender',law:'Fischereirecht Hamburg',data:'Einstellungen'};
+function menu(o){document.body.classList.toggle('menu',o);$('#menuBtn').setAttribute('aria-expanded',o);$('#drawer').setAttribute('aria-hidden',!o);if(o)setTimeout(()=>$('#menuClose').focus(),230);else $('#menuBtn').focus({preventScroll:true})}
+$('#menuBtn').onclick=()=>menu(true);$('#menuClose').onclick=()=>menu(false);$('#scrim').onclick=()=>menu(false);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('menu'))menu(false)});
+$('#nav').addEventListener('click',e=>{if(e.target.dataset.v)menu(false)});
+let swx=null;$('#drawer').addEventListener('touchstart',e=>{swx=e.touches[0].clientX},{passive:true});$('#drawer').addEventListener('touchend',e=>{if(swx!==null&&e.changedTouches[0].clientX-swx<-60)menu(false);swx=null},{passive:true});
+$('#hSet').onclick=()=>show('data');$('#hSess').onclick=()=>show('map');$('#theme2').onclick=()=>$('#theme').click();
+document.addEventListener('focusin',e=>{if(e.target.closest&&e.target.closest('dialog')&&/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))setTimeout(()=>e.target.scrollIntoView({block:'center',behavior:'smooth'}),300)});
+</script>
+<script src="recht.js"></script>
+<script src="calendar.js"></script></body></html>

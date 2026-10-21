@@ -1,0 +1,24 @@
+{
+ "name": "Hohendeicher See – Angelkarte",
+ "short_name": "Angelkarte HH",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#0d1512",
+ "theme_color": "#101b17",
+ "lang": "de",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  }
+ ],
+ "id": "./",
+ "description": "Fang- und Kontaktkarte für den Hohendeicher See (Oortkatensee), Hamburg"
+}
